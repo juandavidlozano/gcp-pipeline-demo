@@ -22,10 +22,8 @@ jobs:
       run: |
         printf "%s" "${{ secrets.GCP_SA_KEY }}" > ${HOME}/gcp-key.json
 
+    - name: Output JSON file content for debugging
+      run: cat ${HOME}/gcp-key.json
+
     - name: Authenticate with GCP
       run: gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
-
-    - name: Upload file to GCS
-      run: |
-        echo "This is a test file" > test-file.txt
-        gsutil cp test-file.txt gs://my-github-actions-bucket-jdl/test-file.txt
