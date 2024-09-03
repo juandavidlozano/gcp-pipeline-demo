@@ -20,11 +20,13 @@ jobs:
 
     - name: Write service account key to file
       run: |
-        echo "${{ secrets.GCP_SA_KEY }}" > ${HOME}/gcp-key-temp.json
-        cat ${HOME}/gcp-key-temp.json | tr -d '\r' > ${HOME}/gcp-key.json
+        echo "${{ secrets.GCP_SA_KEY }}" > ${HOME}/gcp-key.json
 
     - name: Debug JSON file content
-      run: cat ${HOME}/gcp-key.json
+      run: |
+        echo "=== START OF JSON FILE CONTENT ==="
+        cat ${HOME}/gcp-key.json
+        echo "=== END OF JSON FILE CONTENT ==="
 
     - name: Authenticate with GCP
       run: gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
