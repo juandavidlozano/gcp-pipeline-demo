@@ -16,7 +16,7 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
       with:
-        project_id: YOUR_PROJECT_ID
+        project_id: test-402517
         service_account_key: ${{ secrets.GCP_SA_KEY }}
 
     - name: Authenticate with GCP
@@ -25,4 +25,4 @@ jobs:
     - name: Upload file to GCS
       run: |
         echo "This is a test file" > test-file.txt
-        gsutil cp test-file.txt gs://YOUR_BUCKET_NAME/test-file.txt
+        gsutil cp test-file.txt gs://my-github-actions-bucket-jdl/test-file.txt
