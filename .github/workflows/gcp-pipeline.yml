@@ -1,0 +1,18 @@
+name: GCP Pipeline
+
+# Controls when the action will run
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run a simple echo command
+      run: echo "Hello, GCP Pipeline is set up and running!"
