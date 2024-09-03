@@ -17,12 +17,12 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: test-402517
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        service_account_key: ${{ secrets.SECRET }}
         export_default_credentials: true
 
     - name: Write service account key to file
       run: |
-        echo "${{ secrets.GCP_SA_KEY }}" > $HOME/gcp-key.json
+        echo "${{ secrets.SECRET }}" > $HOME/gcp-key.json
         echo "=== START OF JSON FILE CONTENT ==="
         cat $HOME/gcp-key.json
         echo "=== END OF JSON FILE CONTENT ==="
