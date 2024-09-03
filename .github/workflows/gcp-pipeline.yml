@@ -17,10 +17,12 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: test-402517
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Write service account key to file
+      run: echo "${{ secrets.GCP_SA_KEY }}" > ${HOME}/gcp-key.json
 
     - name: Authenticate with GCP
-      run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+      run: gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
 
     - name: Upload file to GCS
       run: |
