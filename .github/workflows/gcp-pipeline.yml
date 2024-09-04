@@ -28,10 +28,9 @@ jobs:
         echo "=== END OF JSON FILE CONTENT ==="
 
     - name: Authenticate with GCP
-      run: gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
-
-    - name: Set Application Default Credentials
-      run: gcloud auth application-default login --key-file=$HOME/gcp-key.json
+      run: |
+        gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+        gcloud auth application-default set-quota-project test-402517
 
     - name: Set up Python
       uses: actions/setup-python@v2
