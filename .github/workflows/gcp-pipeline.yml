@@ -30,6 +30,9 @@ jobs:
     - name: Authenticate with GCP
       run: gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
 
+    - name: Set Application Default Credentials
+      run: gcloud auth application-default login --key-file=$HOME/gcp-key.json
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -49,4 +52,4 @@ jobs:
         python dataflow_pipeline.py \
         --input gs://my-github-actions-bucket-jdl/api_response.json \
         --output test-402517:my_dataset.api_data_table \
-        --gcp_key $HOME/gcp-key.json  # Ensure the correct key file is passed
+        --gcp_key $HOME/gcp-key.json
