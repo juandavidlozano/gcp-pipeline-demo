@@ -2,16 +2,19 @@ from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOpt
 import apache_beam as beam
 import json
 import argparse
-import os
 
 def parse_json(element):
-    record = json.loads(element)
-    return {
-        'userId': record['userId'],
-        'id': record['id'],
-        'title': record['title'],
-        'body': record['body']
-    }
+    try:
+        record = json.loads(element)
+        return {
+            'userId': record['userId'],
+            'id': record['id'],
+            'title': record['title'],
+            'body': record['body']
+        }
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None  # Return None if there's an error in parsing the JSON
 
 def run(argv=None):
     parser = argparse.ArgumentParser()
@@ -20,15 +23,13 @@ def run(argv=None):
     parser.add_argument('--gcp_key', dest='gcp_key', required=True, help='Path to GCP credentials JSON file')
     known_args, pipeline_args = parser.parse_known_args(argv)
 
-    # Set the environment variable for ADC
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = known_args.gcp_key
-
     pipeline_options = PipelineOptions(pipeline_args)
     google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     google_cloud_options.project = 'test-402517'
     google_cloud_options.region = 'us-central1'
+    google_cloud_options.service_account_email = known_args.gcp_key  # Pass GCP key
 
-    # Set GCS temp and staging locations (important for Dataflow)
+    # Set GCS temp locations (important for Dataflow)
     google_cloud_options.temp_location = 'gs://my-github-actions-bucket-jdl/temp'
     google_cloud_options.staging_location = 'gs://my-github-actions-bucket-jdl/staging'
 
@@ -36,7 +37,10 @@ def run(argv=None):
         (
             p
             | 'Read from GCS' >> beam.io.ReadFromText(known_args.input)
-            | 'Parse JSON' >> beam.Map(parse_json)
+            | 'Filter empty lines' >> beam.Filter(lambda line: line.strip() != '')  # Filter out empty lines
+            | 'Print raw data' >> beam.Map(print)  # Debugging step: Print each line of the file
+            | 'Parse JSON' >> beam.Map(parse_json)  # Parse JSON
+            | 'Filter invalid JSON' >> beam.Filter(lambda x: x is not None)  # Remove any records that failed to parse
             | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
                 known_args.output,
                 schema='userId:INTEGER, id:INTEGER, title:STRING, body:STRING',
