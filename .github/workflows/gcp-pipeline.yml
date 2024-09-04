@@ -53,3 +53,4 @@ jobs:
         --input gs://my-github-actions-bucket-jdl/api_response.json \
         --output test-402517:my_dataset.api_data_table \
         --gcp_key $HOME/gcp-key.json
+
