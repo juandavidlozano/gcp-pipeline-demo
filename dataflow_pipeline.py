@@ -1,52 +1,49 @@
-name: GCP Pipeline
+from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions
+from apache_beam.options.pipeline_options import SetupOptions
+import json
+import argparse
 
-on:
-  push:
-    branches:
-      - main
+def parse_json(element):
+    record = json.loads(element)
+    return {
+        'userId': record['userId'],
+        'id': record['id'],
+        'title': record['title'],
+        'body': record['body']
+    }
 
-jobs:
-  upload-to-gcs-and-run-dataflow:
-    runs-on: ubuntu-latest
+def run(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', dest='input', required=True, help='Input GCS file path')
+    parser.add_argument('--output', dest='output', required=True, help='BigQuery table name: project:dataset.table')
+    parser.add_argument('--gcp_key', dest='gcp_key', required=True, help='Path to the service account JSON file')
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    known_args, pipeline_args = parser.parse_known_args(argv)
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: test-402517
-        service_account_key: ${{ secrets.SECRET }}
-        export_default_credentials: true
+    # Pipeline options
+    pipeline_options = PipelineOptions(pipeline_args)
+    google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
+    google_cloud_options.project = 'test-402517'
+    google_cloud_options.job_name = 'dataflow-gcs-to-bq'
+    google_cloud_options.region = 'us-central1'
+    google_cloud_options.temp_location = 'gs://my-github-actions-bucket-jdl/temp/'
+    google_cloud_options.staging_location = 'gs://my-github-actions-bucket-jdl/staging/'
+    pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    - name: Decode and write service account key to file
-      run: |
-        echo "${{ secrets.SECRET }}" | base64 --decode > $HOME/gcp-key.json
-        echo "=== START OF JSON FILE CONTENT ==="
-        cat $HOME/gcp-key.json
-        echo "=== END OF JSON FILE CONTENT ==="
+    # Explicitly setting the credentials for Dataflow to use
+    pipeline_options.view_as(GoogleCloudOptions).service_account_key_file = known_args.gcp_key
 
-    - name: Authenticate with GCP
-      run: gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+    with beam.Pipeline(options=pipeline_options) as p:
+        (
+            p
+            | 'Read from GCS' >> beam.io.ReadFromText(known_args.input)
+            | 'Parse JSON' >> beam.Map(parse_json)
+            | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
+                known_args.output,
+                schema='userId:INTEGER, id:INTEGER, title:STRING, body:STRING',
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
+        )
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Run Python script to fetch API data
-      run: python fetch_data.py
-
-    - name: Upload file to GCS
-      run: gsutil cp api_response.json gs://my-github-actions-bucket-jdl/api_response.json
-
-    - name: Run Dataflow Pipeline
-      run: |
-        python dataflow_pipeline.py \
-          --input gs://my-github-actions-bucket-jdl/api_response.json \
-          --output test-402517:my_dataset.api_data_table \
-          --gcp_key $HOME/gcp-key.json
+if __name__ == '__main__':
+    run()
