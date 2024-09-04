@@ -2,6 +2,7 @@ from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOpt
 import apache_beam as beam
 import json
 import argparse
+import os
 
 def parse_json(element):
     record = json.loads(element)
@@ -19,13 +20,15 @@ def run(argv=None):
     parser.add_argument('--gcp_key', dest='gcp_key', required=True, help='Path to GCP credentials JSON file')
     known_args, pipeline_args = parser.parse_known_args(argv)
 
+    # Set the environment variable for ADC
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = known_args.gcp_key
+
     pipeline_options = PipelineOptions(pipeline_args)
     google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     google_cloud_options.project = 'test-402517'
     google_cloud_options.region = 'us-central1'
-    google_cloud_options.service_account_email = known_args.gcp_key  # Pass GCP key
 
-    # Set GCS temp locations (important for Dataflow)
+    # Set GCS temp and staging locations (important for Dataflow)
     google_cloud_options.temp_location = 'gs://my-github-actions-bucket-jdl/temp'
     google_cloud_options.staging_location = 'gs://my-github-actions-bucket-jdl/staging'
 
