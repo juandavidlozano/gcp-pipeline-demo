@@ -1,3 +1,4 @@
+
 name: GCP Pipeline
 
 on:
@@ -27,10 +28,10 @@ jobs:
         cat $HOME/gcp-key.json
         echo "=== END OF JSON FILE CONTENT ==="
 
-    - name: Authenticate with GCP
+    - name: Authenticate with GCP and Set Default Credentials
       run: |
         gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
-        gcloud auth application-default set-quota-project test-402517
+        export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-key.json
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -52,4 +53,3 @@ jobs:
         --input gs://my-github-actions-bucket-jdl/api_response.json \
         --output test-402517:my_dataset.api_data_table \
         --gcp_key $HOME/gcp-key.json
-
