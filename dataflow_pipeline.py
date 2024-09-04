@@ -28,7 +28,7 @@ def run(argv=None):
     google_cloud_options.project = 'test-402517'
     google_cloud_options.region = 'us-central1'
 
-    # Set the service account key
+    # Set the service account key.
     google_cloud_options.service_account_email = known_args.gcp_key
 
     # Set GCS temp locations
