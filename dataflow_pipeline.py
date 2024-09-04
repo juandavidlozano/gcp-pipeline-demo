@@ -14,7 +14,7 @@ def parse_json(element):
         }
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")
-        return None  # Return None if there's an error in parsing the JSON
+        return None
 
 def run(argv=None):
     parser = argparse.ArgumentParser()
@@ -27,9 +27,11 @@ def run(argv=None):
     google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     google_cloud_options.project = 'test-402517'
     google_cloud_options.region = 'us-central1'
-    google_cloud_options.service_account_email = known_args.gcp_key  # Pass GCP key
 
-    # Set GCS temp locations (important for Dataflow)
+    # Set the service account key
+    google_cloud_options.service_account_email = known_args.gcp_key
+
+    # Set GCS temp locations
     google_cloud_options.temp_location = 'gs://my-github-actions-bucket-jdl/temp'
     google_cloud_options.staging_location = 'gs://my-github-actions-bucket-jdl/staging'
 
@@ -37,10 +39,9 @@ def run(argv=None):
         (
             p
             | 'Read from GCS' >> beam.io.ReadFromText(known_args.input)
-            | 'Filter empty lines' >> beam.Filter(lambda line: line.strip() != '')  # Filter out empty lines
-            | 'Print raw data' >> beam.Map(print)  # Debugging step: Print each line of the file
-            | 'Parse JSON' >> beam.Map(parse_json)  # Parse JSON
-            | 'Filter invalid JSON' >> beam.Filter(lambda x: x is not None)  # Remove any records that failed to parse
+            | 'Filter empty lines' >> beam.Filter(lambda line: line.strip() != '')
+            | 'Parse JSON' >> beam.Map(parse_json)
+            | 'Filter invalid JSON' >> beam.Filter(lambda x: x is not None)
             | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
                 known_args.output,
                 schema='userId:INTEGER, id:INTEGER, title:STRING, body:STRING',
