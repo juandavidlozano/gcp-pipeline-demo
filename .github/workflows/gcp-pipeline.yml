@@ -31,7 +31,7 @@ jobs:
       run: gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
 
     - name: Set Application Default Credentials
-      run: gcloud auth application-default login --key-file=$HOME/gcp-key.json
+      run: gcloud auth application-default activate-service-account --key-file=$HOME/gcp-key.json
 
     - name: Set up Python
       uses: actions/setup-python@v2
