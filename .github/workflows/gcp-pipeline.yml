@@ -41,12 +41,6 @@ jobs:
     - name: Run Python script to fetch API data
       run: python fetch_data.py
 
-    - name: List files in directory
-      run: ls -l
-
-    - name: Print API response file contents
-      run: cat api_response.json
-
     - name: Upload file to GCS
       run: gsutil cp api_response.json gs://my-github-actions-bucket-jdl/api_response.json
 
@@ -54,5 +48,6 @@ jobs:
       run: |
         python dataflow_pipeline.py \
         --input gs://my-github-actions-bucket-jdl/api_response.json \
-        --output test-402517:my_dataset.api_data_table
+        --output test-402517:my_dataset.api_data_table \
+        --gcp_key $HOME/gcp-key.json
 
