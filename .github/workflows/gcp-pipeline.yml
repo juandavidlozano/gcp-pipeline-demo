@@ -41,5 +41,11 @@ jobs:
     - name: Run Python script
       run: python fetch_data.py
 
+    - name: List files in directory
+      run: ls -l
+
+    - name: Print API response file contents
+      run: cat api_response.json
+
     - name: Upload file to GCS
       run: gsutil cp api_response.json gs://my-github-actions-bucket-jdl/api_response.json
