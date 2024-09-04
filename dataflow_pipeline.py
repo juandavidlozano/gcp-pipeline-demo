@@ -1,9 +1,12 @@
+import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions
-from apache_beam.options.pipeline_options import SetupOptions
 import json
 import argparse
 
 def parse_json(element):
+    """
+    Parse each JSON element and extract relevant fields to transform into rows
+    """
     record = json.loads(element)
     return {
         'userId': record['userId'],
@@ -13,25 +16,20 @@ def parse_json(element):
     }
 
 def run(argv=None):
+    """
+    Main pipeline function to read JSON, transform, and write to BigQuery.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', dest='input', required=True, help='Input GCS file path')
     parser.add_argument('--output', dest='output', required=True, help='BigQuery table name: project:dataset.table')
-    parser.add_argument('--gcp_key', dest='gcp_key', required=True, help='Path to the service account JSON file')
-
     known_args, pipeline_args = parser.parse_known_args(argv)
 
-    # Pipeline options
+    # Set pipeline options
     pipeline_options = PipelineOptions(pipeline_args)
     google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     google_cloud_options.project = 'test-402517'
-    google_cloud_options.job_name = 'dataflow-gcs-to-bq'
     google_cloud_options.region = 'us-central1'
-    google_cloud_options.temp_location = 'gs://my-github-actions-bucket-jdl/temp/'
-    google_cloud_options.staging_location = 'gs://my-github-actions-bucket-jdl/staging/'
-    pipeline_options.view_as(SetupOptions).save_main_session = True
-
-    # Explicitly setting the credentials for Dataflow to use
-    pipeline_options.view_as(GoogleCloudOptions).service_account_key_file = known_args.gcp_key
+    google_cloud_options.job_name = 'gcp-pipeline-demo'
 
     with beam.Pipeline(options=pipeline_options) as p:
         (
